@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Sherman TX Local Guide — Jeff Dowden</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --clay: #c4734a;
+    --clay-light: #f5ede6;
+    --clay-dark: #8a4a28;
+    --ink: #141008;
+    --ink-2: #2a2018;
+    --ink-3: #5a4e40;
+    --ink-4: #9a8e80;
+    --cream: #faf6ee;
+    --cream-2: #f0e8d8;
+    --cream-3: #e4d8c4;
+    --sage: #4a5e3a;
+    --border: #d8cfc0;
+    --serif: 'Playfair Display', Georgia, serif;
+    --body: 'Crimson Pro', Georgia, serif;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body { font-family: var(--body); background: #1a1208; color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-x: hidden; }
+
+  /* OUTER SHELL */
+  .book-shell { width: 100%; max-width: 1100px; padding: 32px 16px 60px; position: relative; }
+
+  /* TOP BAR */
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .top-bar-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+  .top-bar-actions { display: flex; gap: 8px; }
+  .bar-btn { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 3px; background: transparent; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; }
+  .bar-btn:hover { border-color: var(--clay); color: var(--clay); }
+  .bar-btn.active-view { border-color: var(--clay); color: var(--clay); }
+
+  /* BOOK CONTAINER */
+  .book-container { position: relative; width: 100%; aspect-ratio: 16/10; max-height: 75vh; }
+
+  /* PAGES */
+  .page-wrapper { position: absolute; inset: 0; display: none; }
+  .page-wrapper.active { display: grid; grid-template-columns: 1fr 1fr; }
+  .page-wrapper.single { grid-template-columns: 1fr; }
+
+  /* SINGLE PAGE */
+  .page { position: relative; overflow: hidden; }
+  .page.left { border-right: 1px solid var(--cream-3); }
+  .page-inner { height: 100%; overflow-y: auto; scrollbar-width: none; }
+  .page-inner::-webkit-scrollbar { display: none; }
+
+  /* PAGE SHADOW */
+  .page.left::after { content:''; position:absolute; right:0; top:0; width:40px; height:100%; background: linear-gradient(to left, rgba(0,0,0,0.12), transparent); pointer-events:none; z-index:2; }
+  .page.right::before { content:''; position:absolute; left:0; top:0; width:40px; height:100%; background: linear-gradient(to right, rgba(0,0,0,0.08), transparent); pointer-events:none; z-index:2; }
+
+  /* BOOK SPINE SHADOW */
+  .book-container::after { content:''; position:absolute; left:50%; top:0; width:3px; height:100%; background: linear-gradient(to right, rgba(0,0,0,0.4), rgba(0,0,0,0.1)); transform:translateX(-50%); z-index:3; pointer-events:none; }
+
+  /* COVER PAGE */
+  .cover { background: var(--ink); height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 0; position: relative; overflow: hidden; }
+  .cover-photo-area { position: absolute; inset: 0; }
+  .cover-photo-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #2a1e10 0%, #1a1208 40%, #2d2015 100%); display: flex; align-items: center; justify-content: center; }
+  .cover-photo-placeholder img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  .cover-photo-note { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.15); letter-spacing: 0.1em; text-align: center; }
+  .cover-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,10,4,0.97) 0%, rgba(14,10,4,0.7) 40%, rgba(14,10,4,0.2) 70%, transparent 100%); }
+  .cover-content { position: relative; z-index: 2; padding: 32px 28px; }
+  .cover-eyebrow { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--clay); margin-bottom: 10px; }
+  .cover-title { font-family: var(--serif); font-size: clamp(1.6rem, 3.5vw, 2.6rem); font-weight: 400; color: #fff; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .cover-title em { font-style: italic; color: var(--clay); }
+  .cover-tagline { font-family: var(--body); font-size: clamp(0.85rem, 1.5vw, 1.05rem); color: rgba(255,255,255,0.5); font-weight: 300; font-style: italic; margin-bottom: 20px; line-height: 1.5; }
+  .cover-author { display: flex; align-items: center; gap: 10px; }
+  .cover-author-line { width: 24px; height: 1px; background: var(--clay); }
+  .cover-author-name { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+  .cover-top { position: relative; z-index: 2; padding: 20px 24px 0; display: flex; justify-content: flex-end; }
+  .cover-issue { font-family: var(--mono); font-size: 8px; letter-spacing: 0.15em; color: rgba(255,255,255,0.2); text-transform: uppercase; }
+
+  /* TOC PAGE */
+  .toc-page { background: var(--cream); height: 100%; padding: 32px 28px; display: flex; flex-direction: column; }
+  .toc-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .toc-eyebrow { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--clay); margin-bottom: 8px; }
+  .toc-title { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; color: var(--ink); }
+  .toc-items { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .toc-item { display: flex; align-items: baseline; gap: 6px; padding: 7px 0; border-bottom: 1px solid rgba(216,207,192,0.4); cursor: pointer; transition: all 0.15s; }
+  .toc-item:hover .toc-item-title { color: var(--clay); }
+  .toc-item:last-child { border-bottom: none; }
+  .toc-num { font-family: var(--mono); font-size: 9px; color: var(--clay); min-width: 22px; }
+  .toc-item-title { font-family: var(--body); font-size: 1rem; color: var(--ink-2); flex: 1; font-weight: 400; line-height: 1.3; }
+  .toc-dots { flex: 1; border-bottom: 1px dotted var(--border); margin: 0 6px 3px; }
+  .toc-page-num { font-family: var(--mono); font-size: 9px; color: var(--ink-4); }
+  .toc-footer { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 8px; color: var(--ink-4); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* CONTENT PAGES */
+  .content-page { background: var(--cream); height: 100%; }
+  .content-page.dark { background: var(--ink); }
+  .content-page.clay { background: var(--clay); }
+  .cp-inner { padding: 28px 24px; height: 100%; overflow-y: auto; scrollbar-width: none; }
+  .cp-inner::-webkit-scrollbar { display: none; }
+
+  /* PAGE HEADER */
+  .cp-chapter { font-family: var(--mono); font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--clay); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .cp-chapter::after { content:''; flex:1; height:1px; background: linear-gradient(to right, var(--border), transparent); }
+  .dark .cp-chapter { color: var(--clay); }
+  .dark .cp-chapter::after { background: linear-gradient(to right, rgba(255,255,255,0.1), transparent); }
+  .cp-chapter-num { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background: var(--clay); color: white; font-size: 8px; line-height: 18px; text-align: center; flex-shrink: 0; }
+  .cp-h1 { font-family: var(--serif); font-size: clamp(1.3rem, 2.5vw, 2rem); font-weight: 400; color: var(--ink); line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 12px; }
+  .cp-h1 em { font-style: italic; color: var(--clay); }
+  .dark .cp-h1 { color: #fff; }
+  .clay .cp-h1 { color: #fff; }
+  .cp-intro { font-size: clamp(0.88rem, 1.3vw, 1rem); line-height: 1.7; color: var(--ink-3); font-weight: 300; margin-bottom: 20px; }
+  .dark .cp-intro { color: rgba(255,255,255,0.55); }
+  .clay .cp-intro { color: rgba(255,255,255,0.75); }
+
+  /* SPOT LIST */
+  .spot-list { display: flex; flex-direction: column; gap: 10px; }
+  .spot-item { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .spot-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .dark .spot-item { border-bottom-color: rgba(255,255,255,0.08); }
+  .spot-item-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .spot-item-num { font-family: var(--mono); font-size: 8px; color: var(--clay); }
+  .spot-item-name { font-family: var(--serif); font-size: clamp(0.9rem, 1.5vw, 1.05rem); font-weight: 600; color: var(--ink); }
+  .dark .spot-item-name { color: #fff; }
+  .clay .spot-item-name { color: #fff; }
+  .spot-item-loc { font-family: var(--mono); font-size: 8px; letter-spacing: 0.08em; color: var(--ink-4); margin-left: auto; text-transform: uppercase; }
+  .dark .spot-item-loc { color: rgba(255,255,255,0.3); }
+  .spot-item-desc { font-size: clamp(0.8rem, 1.2vw, 0.9rem); line-height: 1.65; color: var(--ink-3); font-weight: 300; }
+  .dark .spot-item-desc { color: rgba(255,255,255,0.5); }
+  .clay .spot-item-desc { color: rgba(255,255,255,0.75); }
+
+  /* TRUTH BOXES */
+  .truth-list { display: flex; flex-direction: column; gap: 10px; }
+  .truth-box { padding: 12px 14px; border-left: 2px solid var(--clay); background: rgba(196,115,74,0.06); border-radius: 0 6px 6px 0; }
+  .truth-box.dark-truth { background: rgba(255,255,255,0.04); border-left-color: var(--clay); }
+  .truth-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--clay); margin-bottom: 5px; }
+  .truth-text { font-size: clamp(0.8rem, 1.2vw, 0.9rem); line-height: 1.65; color: var(--ink-2); font-weight: 300; }
+  .dark-truth .truth-text { color: rgba(255,255,255,0.6); }
+
+  /* NEIGHBORHOOD ITEMS */
+  .nhd-list { display: flex; flex-direction: column; gap: 12px; }
+  .nhd-item { display: flex; gap: 14px; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  .nhd-item:last-child { border-bottom: none; }
+  .nhd-price { font-family: var(--serif); font-size: clamp(0.9rem, 1.5vw, 1.1rem); font-weight: 600; color: var(--clay); white-space: nowrap; line-height: 1.3; min-width: 80px; }
+  .nhd-name { font-family: var(--sans); font-size: clamp(0.75rem, 1.1vw, 0.85rem); font-weight: 600; color: var(--ink); margin-bottom: 4px; letter-spacing: 0.02em; }
+  .nhd-desc { font-size: clamp(0.78rem, 1.1vw, 0.88rem); line-height: 1.6; color: var(--ink-3); font-weight: 300; }
+
+  /* GROWTH ITEMS */
+  .growth-list { display: flex; flex-direction: column; gap: 12px; }
+  .growth-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 14px; }
+  .growth-header { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .growth-icon { font-size: 1.2rem; }
+  .growth-name { font-family: var(--serif); font-size: clamp(0.9rem, 1.4vw, 1.05rem); font-weight: 600; color: #fff; }
+  .growth-desc { font-size: clamp(0.78rem, 1.1vw, 0.88rem); line-height: 1.6; color: rgba(255,255,255,0.5); font-weight: 300; }
+  .growth-stat { font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--clay); margin-top: 7px; }
+
+  /* PULLOUT QUOTE */
+  .pull-quote { background: var(--ink); padding: 24px; border-radius: 8px; margin: 16px 0; position: relative; overflow: hidden; }
+  .pull-quote::before { content:'\201C'; font-family: var(--serif); font-size: 8rem; color: rgba(196,115,74,0.08); position: absolute; top: -20px; left: 8px; line-height: 1; }
+  .pull-quote-text { font-family: var(--serif); font-size: clamp(0.95rem, 1.5vw, 1.1rem); font-style: italic; color: #fff; line-height: 1.55; position: relative; z-index: 1; }
+  .pull-quote-attr { font-family: var(--mono); font-size: 8px; color: var(--clay); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 10px; }
+
+  /* BACK COVER */
+  .back-cover { background: var(--ink); height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 32px 28px; position: relative; overflow: hidden; }
+  .back-cover::before { content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px; border-radius:50%; background: radial-gradient(circle, rgba(196,115,74,0.06) 0%, transparent 70%); }
+  .bc-top { position: relative; }
+  .bc-tagline { font-family: var(--serif); font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 400; font-style: italic; color: #fff; line-height: 1.3; margin-bottom: 16px; }
+  .bc-tagline em { color: var(--clay); font-style: normal; }
+  .bc-body { font-size: clamp(0.85rem, 1.3vw, 0.95rem); line-height: 1.75; color: rgba(255,255,255,0.5); font-weight: 300; max-width: 400px; margin-bottom: 24px; }
+  .bc-cta { display: inline-block; font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--clay); border: 1px solid rgba(196,115,74,0.4); padding: 10px 20px; border-radius: 2px; text-decoration: none; }
+  .bc-bottom { position: relative; }
+  .bc-brand { font-family: var(--serif); font-size: clamp(1rem, 1.8vw, 1.3rem); font-weight: 400; color: rgba(255,255,255,0.25); margin-bottom: 4px; }
+  .bc-brand em { font-style: italic; color: var(--clay); opacity: 0.7; }
+  .bc-sub { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; color: rgba(255,255,255,0.15); text-transform: uppercase; }
+  .bc-divider { width: 32px; height: 1px; background: var(--clay); opacity: 0.4; margin: 16px 0; }
+
+  /* PAGE FOOTER */
+  .page-footer { position: absolute; bottom: 0; left: 0; right: 0; height: 28px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--cream); border-top: 1px solid var(--border); z-index: 1; }
+  .dark .page-footer { background: var(--ink-2); border-top-color: rgba(255,255,255,0.06); }
+  .page-footer-label { font-family: var(--mono); font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-4); }
+  .dark .page-footer-label { color: rgba(255,255,255,0.2); }
+  .page-num { font-family: var(--mono); font-size: 7px; color: var(--clay); }
+
+  /* NAV */
+  .book-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; }
+  .nav-btn { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 10px 20px; border: 1px solid rgba(255,255,255,0.15); border-radius: 2px; background: transparent; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; }
+  .nav-btn:hover:not(:disabled) { border-color: var(--clay); color: var(--clay); }
+  .nav-btn:disabled { opacity: 0.2; cursor: default; }
+  .nav-indicator { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.1em; min-width: 80px; text-align: center; }
+
+  /* CHAPTER TABS */
+  .chapter-tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .ch-tab { font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 8px; border: 1px solid rgba(255,255,255,0.08); border-radius: 2px; background: transparent; color: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.15s; }
+  .ch-tab:hover { border-color: var(--clay); color: var(--clay); }
+  .ch-tab.active { background: var(--clay); border-color: var(--clay); color: white; }
+
+  /* PRINT */
+  @media print {
+    body { background: white; }
+    .top-bar, .book-nav, .chapter-tabs { display: none; }
+    .book-container { aspect-ratio: auto; max-height: none; height: auto; }
+    .page-wrapper { display: grid !important; page-break-after: always; }
+    .page { height: 100vh; }
+  }
+
+  @media (max-width: 600px) {
+    .page-wrapper { grid-template-columns: 1fr; }
+    .book-container::after { display: none; }
+    .page.left { border-right: none; border-bottom: 1px solid var(--cream-3); }
+    .page.left::after { display: none; }
+    .page.right::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="book-shell">
+
+  <div class="top-bar">
+    <div class="top-bar-title">The Sherman TX Local Guide · Jeff Dowden · 2026</div>
+    <div class="top-bar-actions">
+      <button class="bar-btn" onclick="window.print()">Print / PDF</button>
+    </div>
+  </div>
+
+  <div class="book-container" id="book">
+
+    <!-- SPREAD 0: COVER + TOC -->
+    <div class="page-wrapper active" id="spread-0">
+      <div class="page left">
+        <div class="cover">
+          <div class="cover-top"><div class="cover-issue">Sherman · Denison · Grayson County · 2026</div></div>
+          <div class="cover-photo-area">
+            <div class="cover-photo-placeholder">
+              <!-- REPLACE WITH: <img src="your-beanie-photo.jpg" alt="Jeff Dowden"> -->
+              <div class="cover-photo-note">[ Your photo goes here ]<br>The beanie couch shot</div>
+            </div>
+          </div>
+          <div class="cover-overlay"></div>
+          <div class="cover-content">
+            <div class="cover-eyebrow">A local's guide to living in</div>
+            <div class="cover-title">Sherman,<br><em>Texas</em></div>
+            <div class="cover-tagline">I don't just sell Sherman.<br>I live it.</div>
+            <div class="cover-author">
+              <div class="cover-author-line"></div>
+              <div class="cover-author-name">Jeff Dowden · Sherman TX Realtor · 10 years on the ground</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page right">
+        <div class="toc-page">
+          <div class="toc-header">
+            <div class="toc-eyebrow">Inside this guide</div>
+            <div class="toc-title">Table of<br>Contents</div>
+          </div>
+          <div class="toc-items">
+            <div class="toc-item" onclick="goTo(1)"><span class="toc-num">01</span><span class="toc-item-title">The honest overview</span><span class="toc-dots"></span><span class="toc-page-num">3</span></div>
+            <div class="toc-item" onclick="goTo(2)"><span class="toc-num">02</span><span class="toc-item-title">Coffee and breakfast</span><span class="toc-dots"></span><span class="toc-page-num">5</span></div>
+            <div class="toc-item" onclick="goTo(3)"><span class="toc-num">03</span><span class="toc-item-title">Lunch spots</span><span class="toc-dots"></span><span class="toc-page-num">7</span></div>
+            <div class="toc-item" onclick="goTo(4)"><span class="toc-num">04</span><span class="toc-item-title">Dinner and date night</span><span class="toc-dots"></span><span class="toc-page-num">9</span></div>
+            <div class="toc-item" onclick="goTo(5)"><span class="toc-num">05</span><span class="toc-item-title">Local bars and hangouts</span><span class="toc-dots"></span><span class="toc-page-num">11</span></div>
+            <div class="toc-item" onclick="goTo(6)"><span class="toc-num">06</span><span class="toc-item-title">Local gems and hidden spots</span><span class="toc-dots"></span><span class="toc-page-num">13</span></div>
+            <div class="toc-item" onclick="goTo(7)"><span class="toc-num">07</span><span class="toc-item-title">Outdoor and nature</span><span class="toc-dots"></span><span class="toc-page-num">15</span></div>
+            <div class="toc-item" onclick="goTo(8)"><span class="toc-num">08</span><span class="toc-item-title">Neighborhoods decoded</span><span class="toc-dots"></span><span class="toc-page-num">17</span></div>
+            <div class="toc-item" onclick="goTo(9)"><span class="toc-num">09</span><span class="toc-item-title">The growth story</span><span class="toc-dots"></span><span class="toc-page-num">19</span></div>
+            <div class="toc-item" onclick="goTo(10)"><span class="toc-num">10</span><span class="toc-item-title">The real numbers</span><span class="toc-dots"></span><span class="toc-page-num">21</span></div>
+            <div class="toc-item" onclick="goTo(11)"><span class="toc-num">11</span><span class="toc-item-title">Let's talk</span><span class="toc-dots"></span><span class="toc-page-num">23</span></div>
+          </div>
+          <div class="toc-footer">Jeff Dowden · Sherman TX · jeffdowdenshermanrealtor.com</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPREAD 1: HONEST OVERVIEW -->
+    <div class="page-wrapper" id="spread-1">
+      <div class="page left">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter"><span class="cp-chapter-num">1</span>The honest overview</div>
+            <div class="cp-h1">Small town charm.<br><em>Big growth aspirations.</em></div>
+            <div class="cp-intro">Sherman is not trying to be Dallas. That's the whole point. It's a town where you still know your neighbors, where the guy at the hardware store remembers your name, and where Friday nights feel like something that actually belongs to the people who live here.</div>
+            <div class="pull-quote">
+              <div class="pull-quote-text">"The people moving here now are getting in while it still feels like home — before it becomes the next place everyone wishes they had bought sooner."</div>
+              <div class="pull-quote-attr">Jeff Dowden · 10 years in Sherman</div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">Jeff Dowden · Sherman TX</span><span class="page-num">3</span></div>
+        </div>
+      </div>
+      <div class="page right">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="truth-list">
+              <div class="truth-box">
+                <div class="truth-label">Who thrives here</div>
+                <div class="truth-text">Families who want more house for their money without sacrificing quality of life. DFW transplants tired of the commute and the cost. Remote workers who realized they don't need to be 40 miles from downtown to live well. People who want to be part of something growing without being swallowed by it.</div>
+              </div>
+              <div class="truth-box">
+                <div class="truth-label">What Sherman is not</div>
+                <div class="truth-text">It's not a suburb. It's not finished — and that's a feature, not a bug. If you need a Whole Foods and rooftop bars, you'll be frustrated. If you want a real community where your dollar goes further and the pace is human — you'll wonder why you waited.</div>
+              </div>
+              <div class="truth-box">
+                <div class="truth-label">The commute reality</div>
+                <div class="truth-text">Sherman to Plano or Frisco is 45–55 minutes. To downtown Dallas, 65–75. For most people that's the trade — a commute two or three days a week in exchange for a home that's genuinely theirs, in a town with actual character.</div>
+              </div>
+              <div class="truth-box">
+                <div class="truth-label">The thing nobody puts in the brochure</div>
+                <div class="truth-text">Sherman is in the middle of one of the most significant economic transformations of any small Texas city in a generation. The window to get in before everyone else figures this out is closing — not tomorrow, but it's closing.</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">The Honest Overview</span><span class="page-num">4</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPREAD 2: COFFEE -->
+    <div class="page-wrapper" id="spread-2">
+      <div class="page left dark">
+        <div class="content-page dark">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter" style="color:var(--clay)"><span class="cp-chapter-num">2</span>Coffee and breakfast</div>
+            <div class="cp-h1">Where Sherman<br><em>starts its morning</em></div>
+            <div class="cp-intro">Not chains. Not franchises. These are the places where regulars have a seat, where the coffee is made by someone who cares, and where you'll run into someone you know every single time.</div>
+            <div class="spot-list">
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">01</span>
+                  <span class="spot-item-name">White Rabbit Coffee House</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">The kind of coffee shop that earns regulars. Local, independently owned, and where Sherman's creative community actually shows up. This is where you go when you want to think, have a real conversation, or just exist without anyone rushing you.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">02</span>
+                  <span class="spot-item-name">CJ's</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">A Sherman staple that's been here long enough to mean something. Come hungry, come early. Don't be surprised if you run into half the people you know before 9am. That's not a coincidence — that's what a real breakfast spot does to a town.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">03</span>
+                  <span class="spot-item-name">Niche Collective</span>
+                  <span class="spot-item-loc">Denison</span>
+                </div>
+                <div class="spot-item-desc">Part of the revitalized Denison downtown scene. The kind of neighborhood coffee shop that makes you realize how much character this area has always had — it just needed someone to pay attention to it.</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer dark"><span class="page-footer-label">Jeff Dowden · Sherman TX</span><span class="page-num">5</span></div>
+        </div>
+      </div>
+      <div class="page right">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter"><span class="cp-chapter-num">3</span>Lunch spots</div>
+            <div class="cp-h1">Where the locals<br><em>actually eat</em></div>
+            <div class="cp-intro">Not the places on the highway. The places you find when someone who actually lives here tells you where to go.</div>
+            <div class="spot-list">
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">01</span>
+                  <span class="spot-item-name">Vitina's Deli</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Fresh, honest food made by people who mean it. A regular lunch stop for anyone who works downtown and knows better than to drive to a chain. The kind of deli that makes you feel like you're somewhere with history.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">02</span>
+                  <span class="spot-item-name">Sage Cafe</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Elevated but comfortable. The place you take a client when you want somewhere that feels professional without being stiff. Good food, good service, and an atmosphere that makes conversation easy.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">03</span>
+                  <span class="spot-item-name">City Limits</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Local flavor, no pretense. Serves food the way food is supposed to be — filling, real, and worth coming back for. A Sherman staple that earns its regulars the old-fashioned way.</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">Coffee · Lunch</span><span class="page-num">6</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPREAD 3: DINNER + BARS -->
+    <div class="page-wrapper" id="spread-3">
+      <div class="page left">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter"><span class="cp-chapter-num">4</span>Dinner and date night</div>
+            <div class="cp-h1">Where Sherman goes<br><em>for a real night out</em></div>
+            <div class="cp-intro">These three spots are proof you don't have to drive to Dallas for a dinner worth remembering.</div>
+            <div class="spot-list">
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">01</span>
+                  <span class="spot-item-name">The Library</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Thoughtful, interesting, and not trying too hard. The kind of dinner spot that surprises people who show up with low expectations and leaves them planning their return before the check comes.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">02</span>
+                  <span class="spot-item-name">34 Chophouse</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">When the occasion calls for something serious. A proper steakhouse in a market where you wouldn't expect one. For celebrations, closing dinners, and impressing someone who thought Sherman wasn't going to surprise them.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">03</span>
+                  <span class="spot-item-name">Stafford House Provisions</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Locally sourced, thoughtfully prepared, housed in a space that feels like it belongs to the history of this town. The kind of restaurant that would be packed every night in Dallas. In Sherman it's a secret that more people are starting to figure out.</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">Dinner</span><span class="page-num">7</span></div>
+        </div>
+      </div>
+      <div class="page right dark">
+        <div class="content-page dark">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter" style="color:var(--clay)"><span class="cp-chapter-num">5</span>Local bars and hangouts</div>
+            <div class="cp-h1">Where Sherman<br><em>actually unwinds</em></div>
+            <div class="cp-intro">The places with personality. The places that have regulars. The places that feel like they belong to the people who live here.</div>
+            <div class="spot-list">
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">01</span>
+                  <span class="spot-item-name">Old Iron Post</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Sherman's local bar with character. Cold drinks, good energy, and the feeling that you're somewhere that actually belongs to the people who live here. The regulars are the atmosphere.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">02</span>
+                  <span class="spot-item-name">Cellarmans</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">A proper wine and craft beer bar in a town that's growing into it. Sophisticated without being pretentious. The kind of spot that signals something about where Sherman is headed.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">03</span>
+                  <span class="spot-item-name">Copacetic Cowboy</span>
+                  <span class="spot-item-loc">Denison</span>
+                </div>
+                <div class="spot-item-desc">The name alone tells you this place has personality. Texas through and through, with the kind of energy that makes a Wednesday night feel like a Friday. A local original that you have to experience to understand.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">04</span>
+                  <span class="spot-item-name">903 Brewers</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">One of the best craft breweries in North Texas, full stop. Local beers, local crowd, local pride. If you're introducing someone to Sherman for the first time, this is on the list — no exceptions.</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer dark"><span class="page-footer-label">Bars · Hangouts</span><span class="page-num">8</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPREAD 4: LOCAL GEMS -->
+    <div class="page-wrapper" id="spread-4">
+      <div class="page left">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter"><span class="cp-chapter-num">6</span>Local gems</div>
+            <div class="cp-h1">The places that give<br><em>Sherman its soul</em></div>
+            <div class="cp-intro">Every town has restaurants. Not every town has places like these.</div>
+            <div class="spot-list">
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">01</span>
+                  <span class="spot-item-name">Say When Pizza & Brewery</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Pizza and craft beer done right. Laid back, genuinely good, and the kind of neighborhood spot that families and friend groups both claim as their own.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">02</span>
+                  <span class="spot-item-name">Lettuce Indulge</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Fresh, healthy, and local. The kind of spot that shows how Sherman's food culture is evolving. Makes you realize this isn't the same town it was five years ago.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">03</span>
+                  <span class="spot-item-name">La Placita</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Independently owned Mexican food that earns its regulars. The kind of place you become a regular at without meaning to.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">04</span>
+                  <span class="spot-item-name">La Piazza · Emily's Kitchen</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Italian and Southern home cooking — each independently owned, each the kind of place that proves Sherman's food scene has real range and real heart.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">05</span>
+                  <span class="spot-item-name">Historic Downtown Denison</span>
+                  <span class="spot-item-loc">Denison</span>
+                </div>
+                <div class="spot-item-desc">Award-winning. Walkable. Independent shops, galleries, and restaurants. The kind of Main Street bigger cities spend millions trying to recreate.</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">Local Gems</span><span class="page-num">9</span></div>
+        </div>
+      </div>
+      <div class="page right">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter"><span class="cp-chapter-num">7</span>Outdoor and nature</div>
+            <div class="cp-h1">Where Sherman<br><em>goes outside</em></div>
+            <div class="cp-intro">The outdoor backbone of the area. The places that make a community feel like a real place to raise a family.</div>
+            <div class="spot-list">
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">01</span>
+                  <span class="spot-item-name">Pecan Grove Park</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Trails, green space, shade, and the kind of park that makes you actually want to be outside on a Saturday morning. This is what a neighborhood park is supposed to feel like.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">02</span>
+                  <span class="spot-item-name">Waterloo</span>
+                  <span class="spot-item-loc">Sherman area</span>
+                </div>
+                <div class="spot-item-desc">One of those spots that locals know about and don't necessarily advertise. Worth exploring when you're ready to see what the area really offers beyond the obvious.</div>
+              </div>
+              <div class="spot-item">
+                <div class="spot-item-header">
+                  <span class="spot-item-num">03</span>
+                  <span class="spot-item-name">Herman Baker Park</span>
+                  <span class="spot-item-loc">Sherman</span>
+                </div>
+                <div class="spot-item-desc">Established, well-used, and genuinely enjoyed by the families who live nearby. The kind of park that tells you something real about the community that uses it.</div>
+              </div>
+            </div>
+            <div class="pull-quote" style="margin-top:16px;">
+              <div class="pull-quote-text">"Come see why Sherman families actually use their weekends here — instead of driving somewhere else to find what they already have."</div>
+              <div class="pull-quote-attr">Jeff Dowden</div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">Outdoor · Nature</span><span class="page-num">10</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPREAD 5: NEIGHBORHOODS -->
+    <div class="page-wrapper" id="spread-5">
+      <div class="page left dark">
+        <div class="content-page dark">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter" style="color:var(--clay)"><span class="cp-chapter-num">8</span>Neighborhoods decoded</div>
+            <div class="cp-h1">Where should<br><em>you actually live?</em></div>
+            <div class="cp-intro">The honest answer depends almost entirely on your budget and life stage. Here's how I think about it after 138 transactions across Grayson County.</div>
+            <div class="nhd-list">
+              <div class="nhd-item" style="border-color:rgba(255,255,255,0.08)">
+                <div class="nhd-price">$200K–$300K</div>
+                <div>
+                  <div class="nhd-name" style="color:#fff">First-time buyers and growing families</div>
+                  <div class="nhd-desc" style="color:rgba(255,255,255,0.5)">Sherman's bread and butter. Established neighborhoods, mature trees, good school districts. Real yards. New construction is entering this range too. You get significantly more house than anywhere in DFW — the trade is you're in Sherman instead of Frisco. Most people who make that trade don't feel like it's a trade at all.</div>
+                </div>
+              </div>
+              <div class="nhd-item" style="border-color:rgba(255,255,255,0.08)">
+                <div class="nhd-price">$300K–$450K</div>
+                <div>
+                  <div class="nhd-name" style="color:#fff">Move-up buyers and DFW transplants</div>
+                  <div class="nhd-desc" style="color:rgba(255,255,255,0.5)">Newer construction, larger lots, sometimes custom finishes at a price point that gets you a townhome in Frisco. This is the TI workforce relocation range. Also where you see the most appreciation as the market matures.</div>
+                </div>
+              </div>
+              <div class="nhd-item" style="border-color:rgba(255,255,255,0.08)">
+                <div class="nhd-price">$450K+</div>
+                <div>
+                  <div class="nhd-name" style="color:#fff">Acreage, character, and the Sherman premium</div>
+                  <div class="nhd-desc" style="color:rgba(255,255,255,0.5)">You start getting into real land. Acreage properties, rural estate lots, homes built to last. Lake Texoma proximity. This range has seen the most appreciation over the last decade and has the most to gain from continued growth.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer dark"><span class="page-footer-label">Neighborhoods</span><span class="page-num">11</span></div>
+        </div>
+      </div>
+      <div class="page right">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter"><span class="cp-chapter-num">9</span>The growth story</div>
+            <div class="cp-h1">Why Sherman in 2026<br><em>is a different conversation</em></div>
+            <div class="cp-intro">Home values here have risen 124% over the last decade. Three things are happening simultaneously that most people in the market don't fully understand yet.</div>
+            <div class="growth-list">
+              <div class="growth-item">
+                <div class="growth-header"><div class="growth-icon">⚡</div><div class="growth-name">Texas Instruments</div></div>
+                <div class="growth-desc">A $60 billion semiconductor investment bringing thousands of permanent high-paying jobs. Phase one is operational. TI and GlobalWafers together add nearly 5,000 permanent positions through 2031. This is the economic engine that changes everything about the trajectory of this market.</div>
+                <div class="growth-stat">$60B investment · 4,700+ permanent jobs</div>
+              </div>
+              <div class="growth-item">
+                <div class="growth-header"><div class="growth-icon">🏗️</div><div class="growth-name">Craig International — Denison</div></div>
+                <div class="growth-desc">189-acre mixed-use development announced March 2026. The kind of project that signals a market maturing — retail, commercial, residential all planned. Combined with revitalized downtown, Denison is having a moment.</div>
+                <div class="growth-stat">189 acres · Mixed-use · March 2026</div>
+              </div>
+              <div class="growth-item">
+                <div class="growth-header"><div class="growth-icon">🌴</div><div class="growth-name">Margaritaville at Lake Texoma</div></div>
+                <div class="growth-desc">$7 billion resort at Preston Harbor. If this comes through it transforms Lake Texoma from regional asset to national destination. The effect on surrounding property values would be significant and lasting.</div>
+                <div class="growth-stat">$7B · Preston Harbor · 2027 groundbreaking</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">The Growth Story</span><span class="page-num">12</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPREAD 6: NUMBERS + BACK COVER -->
+    <div class="page-wrapper" id="spread-6">
+      <div class="page left">
+        <div class="content-page">
+          <div class="cp-inner" style="padding-bottom:36px;">
+            <div class="cp-chapter"><span class="cp-chapter-num">10</span>The real numbers</div>
+            <div class="cp-h1">What $300K actually<br><em>gets you here</em></div>
+            <div class="cp-intro">The numbers that matter when you're making a real decision about where your family lives next.</div>
+            <div class="truth-list">
+              <div class="truth-box">
+                <div class="truth-label">$300K in Sherman vs DFW</div>
+                <div class="truth-text">In Sherman — 3 or 4 bedrooms, a real yard, two-car garage, established neighborhood. In Frisco — a townhome with an HOA that decides what color you paint your door. That math is the reason this market keeps growing.</div>
+              </div>
+              <div class="truth-box">
+                <div class="truth-label">Cost of living</div>
+                <div class="truth-text">Property taxes in Grayson County run roughly 2–2.5%. No state income tax. Grocery, dining, and services are noticeably lower than DFW. Most families report their monthly cost of living dropping meaningfully after the move.</div>
+              </div>
+              <div class="truth-box">
+                <div class="truth-label">The remote work equation</div>
+                <div class="truth-text">If you're fully remote or hybrid, Sherman's value proposition is almost unfair. Real community, outdoor access, lower cost of living, and a housing market where your dollar actually means something. No commute math required.</div>
+              </div>
+              <div class="truth-box">
+                <div class="truth-label">Schools — the honest take</div>
+                <div class="truth-text">Sherman ISD, Denison ISD, and Howe ISD are the primary options. Each has genuine strengths. This deserves a real conversation based on your specific situation — a general answer doesn't do it justice. Ask me directly.</div>
+              </div>
+            </div>
+          </div>
+          <div class="page-footer"><span class="page-footer-label">The Real Numbers</span><span class="page-num">13</span></div>
+        </div>
+      </div>
+      <div class="page right">
+        <div class="back-cover">
+          <div class="bc-top">
+            <div class="bc-tagline">I don't just sell Sherman.<br><em>I live it.</em></div>
+            <div class="bc-body">Ten years in this market — neighborhood by neighborhood, street by street. My job is to give you honest information and let you make the best decision for your family. No pitch. No pressure. That's not a slogan. That's genuinely how I work.</div>
+            <a href="mailto:jeff@jeffdowdenshermanrealtor.com" class="bc-cta">Start the conversation</a>
+          </div>
+          <div class="bc-bottom">
+            <div class="bc-divider"></div>
+            <div class="bc-brand">Jeff Dowden · <em>I advise. You decide.</em></div>
+            <div class="bc-sub">Sherman TX · 10 years · 138 transactions · $34M+ volume</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end book-container -->
+
+  <!-- NAV -->
+  <div class="book-nav">
+    <button class="nav-btn" id="prev-btn" onclick="prevSpread()" disabled>← Previous</button>
+    <div class="nav-indicator" id="nav-indicator">1 / 7</div>
+    <button class="nav-btn" id="next-btn" onclick="nextSpread()">Next →</button>
+  </div>
+
+  <!-- CHAPTER TABS -->
+  <div class="chapter-tabs" id="chapter-tabs">
+    <button class="ch-tab active" onclick="goTo(0)">Cover</button>
+    <button class="ch-tab" onclick="goTo(1)">Overview</button>
+    <button class="ch-tab" onclick="goTo(2)">Coffee · Lunch</button>
+    <button class="ch-tab" onclick="goTo(3)">Dinner · Bars</button>
+    <button class="ch-tab" onclick="goTo(4)">Gems · Outdoor</button>
+    <button class="ch-tab" onclick="goTo(5)">Neighborhoods</button>
+    <button class="ch-tab" onclick="goTo(6)">Numbers · Close</button>
+  </div>
+
+</div><!-- end book-shell -->
+
+<script>
+let currentSpread = 0;
+const totalSpreads = 7;
+
+function updateNav() {
+  document.getElementById('prev-btn').disabled = currentSpread === 0;
+  document.getElementById('next-btn').disabled = currentSpread === totalSpreads - 1;
+  document.getElementById('nav-indicator').textContent = (currentSpread + 1) + ' / ' + totalSpreads;
+  document.querySelectorAll('.ch-tab').forEach((t, i) => t.classList.toggle('active', i === currentSpread));
+}
+
+function showSpread(n) {
+  document.querySelectorAll('.page-wrapper').forEach(p => p.classList.remove('active'));
+  document.getElementById('spread-' + n).classList.add('active');
+  currentSpread = n;
+  updateNav();
+}
+
+function nextSpread() { if (currentSpread < totalSpreads - 1) showSpread(currentSpread + 1); }
+function prevSpread() { if (currentSpread > 0) showSpread(currentSpread - 1); }
+function goTo(n) { showSpread(n); }
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextSpread();
+  if (e.key === 'ArrowLeft') prevSpread();
+});
+
+updateNav();
+</script>
+</body>
+</html>
